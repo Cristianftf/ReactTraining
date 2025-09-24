@@ -3,11 +3,11 @@ import './Header.css'
 /**el Children se utiliza para poder pasar los props hijos que estan en la aplicacion principal, como el h1 que esta dentro del Header en la 
  * App.jsx
  */
-export const Header = ({Children,title,show}) => {
+export const Header = ({children,title,show}) => {
   return (
     <header className="header">
       <h1 className='header-title'>{title || "titulo por defecto "}</h1>
-      {Children }
+      {children}
       {
         /** esta es una forma de hacer el if
          */
@@ -17,4 +17,3 @@ export const Header = ({Children,title,show}) => {
     </header>
   );
 };
-
