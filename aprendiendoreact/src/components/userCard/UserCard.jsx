@@ -4,8 +4,10 @@ import { useState } from 'react';
 export const UserCard = ({user}) => {
     const{id,name,description}=user;
     const [isVisible, setIsVisible] = useState(false);
+    const [address,setaddress]=useState('');
 
     const handleClick = () => {
+        setaddress({...address,city:'medellin',country:'colombia'});
         setIsVisible(!isVisible);
     };
     
