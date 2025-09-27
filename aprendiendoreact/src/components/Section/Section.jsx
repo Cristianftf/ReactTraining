@@ -4,14 +4,6 @@ import UserCard from '../userCard/UserCard';
 import useState from 'react';
 
 
-const user=[
-  {
-    id:1,
-    name:"Cristian",
-    description:'soy un desarrollador web'
-  }
-]
-
 
 //el useEffect se utiliza para manejar los ciclos de vida de los componentes
 //el primer parametro es una funcion que se va a ejecutar cuando el componente se monte, actualice o desmonte
@@ -23,11 +15,16 @@ const user=[
 export const Section = () => {
 const[count,setCount]=useState(0);
 const[likes,setLikes]=useState(0);
+const [users,setUsers]=useState([]);
 
   useEffect(()=>{
   fetch('https://dummyjson.com/users')
   .then(res=>res.json())
-  .then(console.log)
+  .then(data=>{
+    console.log(data);
+    setUsers(data.users);
+
+  })
    
 },[count,likes])
 
@@ -49,7 +46,7 @@ const handleClick=()=>{
 
       <section>
         {
-          user.map((user) => (
+          users.map((user) => (
             <UserCard key={user.id} user={user} />
           ))
         }
