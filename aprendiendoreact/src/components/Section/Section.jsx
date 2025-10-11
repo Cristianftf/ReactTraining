@@ -11,18 +11,18 @@ import UserCard from '../userCard/UserCard';
 export const Section = () => {
 const[count,setCount]=useState(0);
 const[likes,setLikes]=useState(0);
-const [users,setUsers]=useState([]);
+const [user,setUser]=useState({});
 
   useEffect(()=>{
-  fetch('https://dummyjson.com/users')
+  fetch('https://dummyjson.com/users/${count}')
   .then(res=>res.json())
   .then(data=>{
     console.log(data);
-    setUsers(data.users);
+    setUser(data);
 
   })
    
-},[count,likes])
+},[count])
 
 const handleClick=()=>{
   setCount(count+1);
@@ -42,7 +42,7 @@ const handleClick=()=>{
 
       <section>
         {
-          users.map((user) => (
+          user.map((user) => (
             <UserCard key={user.id} user={user} />
           ))
         }
