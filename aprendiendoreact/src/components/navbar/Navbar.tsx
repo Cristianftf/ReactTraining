@@ -26,6 +26,12 @@ const Navbar: React.FC = () => {
     setIsOpen(!isOpen);
   };
 
+
+
+
+
+
+
   return (
     <header className="navbar-container">
       
@@ -41,7 +47,7 @@ const Navbar: React.FC = () => {
         aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
       >
         {/* Muestra un icono X si está abierto, el icono de barras si está cerrado */}
-        {isOpen ? <FaTimes /> : <FaBars />}
+        {isOpen ? '✖' : '☰'}
       </button>
 
       {/* Lista de Enlaces (la parte interactiva y responsiva) */}
