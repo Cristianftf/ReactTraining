@@ -1,13 +1,13 @@
 package com.spring_boot_training.demo.repository;
 
-import java.lang.reflect.Array;
-import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import com.spring_boot_training.demo.model.User;
+
+import io.micrometer.common.lang.NonNull;
 
 @Repository
 public interface UserRepository extends JpaRepository<User,Long>{
@@ -16,7 +16,7 @@ public interface UserRepository extends JpaRepository<User,Long>{
     User findById(long id);
     List<User> findAll();
     void deleteById(long id);
-    User save(User user);
+    User save(@NonNull User user);
     List<User> findUserByRoleList(String role);
     Boolean existsByEmail(String email);
     Boolean existsByName(String name);
