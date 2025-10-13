@@ -1,5 +1,6 @@
 package com.spring_boot_training.demo.repository;
 
+import java.awt.print.Pageable;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +15,7 @@ public interface UserRepository extends JpaRepository<User,Long>{
     User findByEmail(String email);
     User findByName(String name);
     User findById(long id);
-    List<User> findAll();
+    List<User> findAll(Pageable pageable);
     void deleteById(long id);
     User save(User user);
     List<User> findUserByRoleList(String role);

@@ -3,10 +3,13 @@ package com.spring_boot_training.demo.service;
 import com.spring_boot_training.demo.dto.UserDto;
 import com.spring_boot_training.demo.model.User;
 import com.spring_boot_training.demo.repository.UserRepository;
+import org.springframework.data.domain.Pageable;
 
 
 import java.util.List;
 
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 public class UserService {  
 
     private final UserRepository userRepository;
+    
 
     UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
@@ -23,8 +27,10 @@ public class UserService {
         return userRepository.findByName(name).toString();
     }
 
+
     public List<User> getAllUsers(){ 
-        return userRepository.findAll();
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
+        return userRepository.findAll(pageable).getContent();
 
     }
     public void deleteUser(long id){
