@@ -10,3 +10,11 @@ export interface FooterSection {
   title: string;
   links: FooterLink[];
 }
+
+export interface User{
+  id: number;
+  name: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'user' | 'guest';
+}
