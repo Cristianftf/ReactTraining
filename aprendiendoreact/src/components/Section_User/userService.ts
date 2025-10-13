@@ -1,70 +1,44 @@
 // src/services/userService.ts
+import { User } from '../../types';
 
-import { User,UserDto } from "../../types";
+const STORAGE_KEY = 'users_db';
 
-const API_BASE_URL = 'http://localhost:8000/api/';
-
-// Función auxiliar para obtener el token
-const getAuthToken = () => {
-    // Reemplaza esto con la lógica real de tu Auth Context o localStorage
-    return localStorage.getItem('authToken') || ''; 
+// Simula la base de datos local
+const getStoredUsers = (): User[] => {
+  const data = localStorage.getItem(STORAGE_KEY);
+  return data ? JSON.parse(data) : [];
 };
 
-// =========================================================
-// R: READ (Listar Usuarios)
-// =========================================================
-export async function fetchUsers(): Promise<User[]> {
-    const response = await fetch(`${API_BASE_URL}/users`, {
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-        },
-    });
+const saveUsers = (users: User[]) => {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+};
 
-    if (!response.ok) {
-        throw new Error('No se pudo obtener la lista de usuarios.');
-    }
+// CREATE
+export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
+  const users = getStoredUsers();
+  const newUser: User = { ...user, id: Date.now() };
+  users.push(newUser);
+  saveUsers(users);
+  return newUser;
+};
 
-    return response.json();
-}
+// READ
+export const fetchUsers = async (): Promise<User[]> => {
+  return getStoredUsers();
+};
 
-// =========================================================
-// C: CREATE (Crear Usuario - Solo la estructura del fetch)
-// =========================================================
-export async function createUser(user: UserDto): Promise<User> {
-    const response = await fetch(`${API_BASE_URL}/users`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${getAuthToken()}`,
-        },
-        body: JSON.stringify(user),
-    });
+// UPDATE
+export const updateUser = async (updatedUser: User): Promise<User> => {
+  const users = getStoredUsers();
+  const index = users.findIndex((u) => u.id === updatedUser.id);
+  if (index === -1) throw new Error('Usuario no encontrado');
+  users[index] = updatedUser;
+  saveUsers(users);
+  return updatedUser;
+};
 
-    if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear el usuario.');
-    }
-    return response.json();
-}
-
-// =========================================================
-// D: DELETE (Eliminar Usuario)
-// =========================================================
-export async function deleteUser(id: number): Promise<void> {
-    const response = await fetch(`${API_BASE_URL}/users/${id}`, {
-        method: 'DELETE',
-        headers: {
-            'Authorization': `Bearer ${getAuthToken()}`,
-        },
-    });
-
-    if (!response.ok) {
-        throw new Error('Error al eliminar el usuario.');
-    }
-    // No retorna nada si la eliminación fue exitosa
-}
-
-// =========================================================
-// U: UPDATE (Actualizar Usuario - Necesitarías una función similar)
-// =========================================================
-// export async function updateUser(id: number, user: UserDto): Promise<User> { ... }
+// DELETE
+export const deleteUser = async (id: number): Promise<void> => {
+  const users = getStoredUsers().filter((u) => u.id !== id);
+  saveUsers(users);
+};
