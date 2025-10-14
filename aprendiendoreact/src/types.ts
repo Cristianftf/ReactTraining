@@ -18,7 +18,7 @@ export interface User{
   password: string;
   rol: 'admin' | 'user' ;
 }
-export type UserDto=Omit<User,'id'|'role'>;
+export type UserDto = Omit<User, 'id'>;
 
 export interface LoginCredentials{
   email:string;
