@@ -16,7 +16,7 @@ export interface User{
   name: string;
   email: string;
   password: string;
-  role: 'admin' | 'user' | 'guest';
+  rol: 'admin' | 'user' ;
 }
 export type UserDto=Omit<User,'id'|'role'>;
 
