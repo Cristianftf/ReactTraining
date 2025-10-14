@@ -1,5 +1,3 @@
-// src/services/userService.ts
-
 import { User,UserDto } from "../../types";
 
 const API_BASE_URL = 'http://localhost:8000/api/';
