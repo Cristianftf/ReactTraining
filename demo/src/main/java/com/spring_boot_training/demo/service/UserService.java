@@ -23,8 +23,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-    public String getUser(String name){ 
-        return userRepository.findByName(name).toString();
+    public User getUser(String name){ 
+        return userRepository.findByName(name);
     }
 
 
