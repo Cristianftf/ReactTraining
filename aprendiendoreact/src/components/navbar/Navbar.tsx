@@ -1,69 +1,87 @@
-// src/components/Navbar.tsx
-import React, { useState } from 'react';
-import './Navbar.css'; 
+import { useState } from 'react';
+import { FiMenu, FiX, FiHome, FiPackage, FiSettings, FiMail, FiLogIn } from 'react-icons/fi';
+import './navbar.css';
 
-
-// Define la estructura de los enlaces
 interface NavLink {
   path: string;
   name: string;
+  icon: React.ReactNode;
 }
 
 const navLinks: NavLink[] = [
-  { path: '/', name: 'Inicio' },
-  { path: '/productos', name: 'Productos' },
-  { path: '/servicios', name: 'Servicios' },
-  { path: '/contacto', name: 'Contacto' },
-  {path:'/login',name:'Login'}
+  { path: '/', name: 'Inicio', icon: <FiHome size={18} /> },
+  { path: '/productos', name: 'Productos', icon: <FiPackage size={18} /> },
+  { path: '/servicios', name: 'Servicios', icon: <FiSettings size={18} /> },
+  { path: '/contacto', name: 'Contacto', icon: <FiMail size={18} /> },
+  { path: '/login', name: 'Login', icon: <FiLogIn size={18} /> },
 ];
 
-const Navbar: React.FC = () => {
-  // Estado para controlar la apertura/cierre del menú móvil
+const Navbar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Función para alternar el estado (abrir/cerrar)
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
-
-
-
-
-
-
   return (
     <header className="navbar-container">
-      
-      {/* Logo o Nombre del Sitio */}
-      <a href="/" className="navbar-logo">
-        Training
-      </a>
+      <nav className="navbar-content">
+        {/* Logo */}
+        <a href="/" className="navbar-logo">
+          <div className="logo-icon">
+            <div className="logo-gradient"></div>
+          </div>
+          <span className="logo-text">Training</span>
+        </a>
 
-      {/* Botón de Menú Hamburguesa (solo visible en móvil) */}
-      <button 
-        className="menu-icon" 
-        onClick={toggleMenu} 
-        aria-label={isOpen ? "Cerrar menú" : "Abrir menú"}
-      >
-        {/* Muestra un icono X si está abierto, el icono de barras si está cerrado */}
-        {isOpen ? '✖' : '☰'}
-      </button>
-
-      {/* Lista de Enlaces (la parte interactiva y responsiva) */}
-      <nav className={`navbar-links ${isOpen ? 'active' : ''}`}>
-        <ul>
+        {/* Desktop Navigation */}
+        <div className="navbar-links-desktop">
           {navLinks.map((link) => (
-            <li key={link.path}>
-              {/* Nota: En una app real de React, usa <Link to={link.path}> de react-router-dom */}
-              <a href={link.path} onClick={() => setIsOpen(false)}>
-                {link.name}
-              </a>
-            </li>
+            <a
+              key={link.path}
+              href={link.path}
+              className="nav-link"
+            >
+              <span className="nav-link-icon">{link.icon}</span>
+              <span className="nav-link-text">{link.name}</span>
+            </a>
           ))}
-        </ul>
+        </div>
+
+        {/* Mobile Menu Button */}
+        <button
+          className="menu-toggle"
+          onClick={toggleMenu}
+          aria-label={isOpen ? 'Cerrar menú' : 'Abrir menú'}
+        >
+          {isOpen ? <FiX size={24} /> : <FiMenu size={24} />}
+        </button>
+
+        {/* Mobile Navigation */}
+        <div className={`navbar-links-mobile ${isOpen ? 'active' : ''}`}>
+          <div className="mobile-menu-content">
+            {navLinks.map((link) => (
+              <a
+                key={link.path}
+                href={link.path}
+                className="nav-link-mobile"
+                onClick={() => setIsOpen(false)}
+              >
+                <span className="nav-link-icon">{link.icon}</span>
+                <span className="nav-link-text">{link.name}</span>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Overlay for mobile menu */}
+        {isOpen && (
+          <div
+            className="mobile-overlay"
+            onClick={() => setIsOpen(false)}
+          />
+        )}
       </nav>
-      
     </header>
   );
 };
