@@ -55,19 +55,7 @@ public class UserService {
     }
 
 
-    // Crear un nuevo usuario
-    public User addUser(UserDto userdto){
-        if(userRepository.existsByEmail(userdto.getEmail())){
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "El correo ya está en uso"
-            );
-        }
-        String encocerdpassword=passwordEncoder.encode(userdto.getPassword());        
-        User usuario = new User(userdto.getName(), userdto.getEmail(), encocerdpassword, userdto.getRol());        
-        
-        return userRepository.save(usuario);
-    }
+   
 
     // Obtener usuarios por rol
     public List<User> getUsersByRole(String role){
@@ -81,30 +69,38 @@ public class UserService {
         userRepository.save(user);
     }
 
-    // Actualizar un usuario existente
-    public User updateUser(long id, UserDto userDto) {
-        User existingUser = userRepository.findById(id);
-        if (existingUser == null) {
-            throw new ResponseStatusException(
-                HttpStatus.NOT_FOUND,
-                "Usuario con ID " + id + " no encontrado"
-            );
+     public User addUser(UserDto dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está registrado");
         }
 
-        if (userRepository.existsByEmailAndIdNot(userDto.getEmail(), id)) {
-            throw new ResponseStatusException(
-                HttpStatus.BAD_REQUEST,
-                "El correo ya está en uso por otro usuario"
-            );
+        String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        User user = new User(
+            dto.getName(),
+            dto.getEmail(),
+            encodedPassword,
+            dto.getRol() // "admin" o "user"
+        );
+        return userRepository.save(user);
+    }
+
+    public User updateUser(Long id, UserDto dto) {
+        User existingUser = userRepository.findById(id)
+            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
+
+        // Validar que el email no esté en uso por otro usuario
+        if (userRepository.existsByEmailAndIdNot(dto.getEmail(), id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "El correo electrónico ya está registrado");
         }
 
-        existingUser.setName(userDto.getName());
-        existingUser.setEmail(userDto.getEmail());
-        if (userDto.getPassword() != null && !userDto.getPassword().isEmpty()) {
-            String encodedPassword = passwordEncoder.encode(userDto.getPassword());
-            existingUser.setPassword(encodedPassword);
+        existingUser.setName(dto.getName());
+        existingUser.setEmail(dto.getEmail());
+        existingUser.setRol(dto.getRol());
+
+        // Solo actualiza la contraseña si se proporciona
+        if (dto.getPassword() != null && !dto.getPassword().trim().isEmpty()) {
+            existingUser.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
-        existingUser.setRol(userDto.getRol());
 
         return userRepository.save(existingUser);
     }

@@ -11,8 +11,11 @@ import com.spring_boot_training.demo.model.User;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
     User findByEmail(String email);
+    
     User findByName(String name);
+
     boolean existsByEmail(String email);
+
     
     boolean existsByEmailAndIdNot(String email, Long id);
     
@@ -23,9 +26,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> findUserByRoleList(String role);
     
     Boolean existsByName(String name);
+
     Boolean existsById(long id);
+
     Long countByRole(String role);
+
     long countByCreatedAtAfter(LocalDateTime date);
+
     @Query("""
         SELECT 
             FUNCTION('to_char', u.createdAt, 'Month') AS monthName,
