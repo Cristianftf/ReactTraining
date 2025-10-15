@@ -3,6 +3,7 @@ package com.spring_boot_training.demo.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,21 +41,25 @@ public class UserController {
         return userService.getUser(name);
     }
 
-    @PostMapping("/add")
-    public void addUSer(@Valid @RequestBody UserDto userDto) {
-        userService.addUser(userDto);         
+     @PostMapping("/add")
+    public ResponseEntity<User> createUser(@RequestBody  UserDto dto) {
+        User newUser = userService.addUser(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(newUser);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> changeRole(@PathVariable Long id, @RequestBody String rol) {
-        userService.updateUserRole(id, rol);        
-        return ResponseEntity.ok("Rol actualizado");
+    public ResponseEntity<User> updateUser(
+            @PathVariable Long id,
+            @RequestBody UserDto dto) {
+        User updatedUser = userService.updateUser(id, dto);
+        return ResponseEntity.ok(updatedUser);
     }
 
     @DeleteMapping("/{id}")
-    public String DeleteUser(long id) {
+    public ResponseEntity<Void> deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
-        return "Usuario eliminado";
+        // 204 No Content: operación exitosa, sin cuerpo
+        return ResponseEntity.noContent().build();
     }
     
     

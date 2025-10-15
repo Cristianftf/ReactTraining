@@ -86,7 +86,7 @@ export function UserTable() {
     try {
       if (modalMode === 'create') {
         // CREATE - POST request
-        const response = await fetch("http://localhost:8000/api/users", {
+        const response = await fetch("http://localhost:8000/api/users/add", {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

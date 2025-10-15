@@ -1,6 +1,9 @@
 package com.spring_boot_training.demo.model;
 
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -30,11 +33,14 @@ public class User {
 
     public String rol;
 
+    private LocalDateTime createdAt;
+
     public User(String name, String email, String password, String rol) {
         this.name = name;
         this.email = email;
         this.password = password;
         this.rol = rol;
+        this.createdAt=LocalDateTime.now();
     }
 
    
