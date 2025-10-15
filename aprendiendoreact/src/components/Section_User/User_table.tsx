@@ -30,32 +30,26 @@ export function UserTable() {
   }, []);
 
   const fetchUsers = async () => {
-    try {
-      setLoading(true);
-      setError("");
-      const response = await fetch("http://localhost:8000/api/users");
-      
-      if (!response.ok) {
-        throw new Error("Error al cargar usuarios");
-      }
-      
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      console.error("Error al cargar usuarios:", error);
-      setError("No se pudieron cargar los usuarios. Usando datos de ejemplo.");
-      // Set mock data for preview
-      setUsers([
-        { id: 1, name: "Ana García", email: "ana.garcia@example.com", password: "", rol: "admin" },
-        { id: 2, name: "Carlos Rodríguez", email: "carlos.r@example.com", password: "", rol: "user" },
-        { id: 3, name: "María López", email: "maria.lopez@example.com", password: "", rol: "user" },
-        { id: 4, name: "Juan Martínez", email: "juan.m@example.com", password: "", rol: "admin" },
-        { id: 5, name: "Laura Sánchez", email: "laura.s@example.com", password: "", rol: "user" },
-      ]);
-    } finally {
-      setLoading(false);
+  setLoading(true); // ✅ Activar loading
+  setError(""); // Limpiar error previo
+  try {
+    const response = await fetch('http://localhost:8000/api/users');
+    
+    if (!response.ok) {
+      throw new Error('Error al cargar la lista de usuarios');
     }
-  };
+
+    const data = await response.json();
+    setUsers(data);
+  } catch (error: any) {
+    console.error('Error al cargar usuarios:', error);
+    addToast('error', error.message || 'No se pudo cargar la lista de usuarios');
+    setUsers([]); // Limpiar para evitar datos obsoletos
+    setError(error.message || 'No se pudo cargar la lista de usuarios'); // Opcional
+  } finally {
+    setLoading(false); // ✅ Desactivar loading
+  }
+};
 
   // Toast functions
   const addToast = (type: ToastMessage['type'], message: string) => {
@@ -83,65 +77,57 @@ export function UserTable() {
 
   // Save user (create or update)
   const handleSaveUser = async (userData: UserDto, userId?: number) => {
-    try {
-      if (modalMode === 'create') {
-        // CREATE - POST request
-        const response = await fetch("http://localhost:8000/api/users/add", {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData),
-        });
+  try {
+    let response: Response;
+    let url = 'http://localhost:8000/api/users';
 
-        if (!response.ok) {
-          throw new Error('Error al crear usuario');
-        }
-
-        const newUser = await response.json();
-        setUsers(prev => [...prev, newUser]);
-        addToast('success', `Usuario ${userData.name} creado exitosamente`);
-      } else {
-        // UPDATE - PUT request
-        const response = await fetch(`http://localhost:8000/api/users/${userId}`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(userData),
-        });
-
-        if (!response.ok) {
-          throw new Error('Error al actualizar usuario');
-        }
-
-        const updatedUser = await response.json();
-        setUsers(prev => prev.map(u => u.id === userId ? updatedUser : u));
-        addToast('success', `Usuario ${userData.name} actualizado exitosamente`);
-      }
-      
-      setIsModalOpen(false);
-    } catch (error) {
-      console.error('Error al guardar usuario:', error);
-      
-      // Simulate success for demo purposes
-      if (modalMode === 'create') {
-        const newUser: User = {
-          id: Date.now(),
-          ...userData,
-        };
-        setUsers(prev => [...prev, newUser]);
-        addToast('success', `Usuario ${userData.name} creado exitosamente`);
-      } else if (userId) {
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, ...userData } : u
-        ));
-        addToast('success', `Usuario ${userData.name} actualizado exitosamente`);
-      }
-      
-      setIsModalOpen(false);
+    if (modalMode === 'create') {
+      response = await fetch(`${url}/add`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+    } else if (userId) {
+      response = await fetch(`${url}/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+    } else {
+      throw new Error('ID de usuario no válido para actualización');
     }
-  };
+
+    if (!response.ok) {
+      // Intentar leer mensaje de error del backend
+      let errorMsg = 'Error desconocido';
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.message || response.statusText || 'Error al guardar usuario';
+      } catch {
+        errorMsg = response.statusText || 'Error al guardar usuario';
+      }
+      throw new Error(errorMsg);
+    }
+
+    const savedUser = await response.json();
+
+    // Actualizar estado local
+    if (modalMode === 'create') {
+      setUsers(prev => [...prev, savedUser]);
+      addToast('success', `Usuario ${userData.name} creado exitosamente`);
+    } else {
+      setUsers(prev => prev.map(u => u.id === userId ? savedUser : u));
+      addToast('success', `Usuario ${userData.name} actualizado exitosamente`);
+    }
+
+    setIsModalOpen(false);
+  } catch (error: any) {
+    console.error('Error al guardar usuario:', error);
+    addToast('error', error.message || 'No se pudo guardar el usuario');
+    // ❌ NO hay mock → no se añade ni actualiza nada en la UI
+    setIsModalOpen(false); // cierra el modal igual, pero sin cambios
+  }
+};
 
   // Delete user - open confirmation modal
   const handleDeleteClick = (user: User) => {
@@ -151,35 +137,40 @@ export function UserTable() {
 
   // Confirm delete
   const handleConfirmDelete = async () => {
-    if (!userToDelete) return;
+  if (!userToDelete) return;
 
-    setIsDeleting(true);
-    try {
-      // DELETE request
-      const response = await fetch(`http://localhost:8000/api/users/${userToDelete.id}`, {
-        method: 'DELETE',
-      });
+  setIsDeleting(true);
+  try {
+    const response = await fetch(`http://localhost:8000/api/users/${userToDelete.id}`, {
+      method: 'DELETE',
+    });
 
-      if (!response.ok) {
-        throw new Error('Error al eliminar usuario');
+    if (!response.ok) {
+      // Intentar obtener mensaje del backend
+      let errorMsg = 'Error al eliminar el usuario';
+      try {
+        const errorData = await response.json();
+        errorMsg = errorData.message || response.statusText || errorMsg;
+      } catch {
+        errorMsg = response.statusText || errorMsg;
       }
-
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
-      addToast('success', `Usuario ${userToDelete.name} eliminado exitosamente`);
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-    } catch (error) {
-      console.error('Error al eliminar usuario:', error);
-      
-      // Simulate success for demo purposes
-      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
-      addToast('success', `Usuario ${userToDelete.name} eliminado exitosamente`);
-      setIsDeleteModalOpen(false);
-      setUserToDelete(null);
-    } finally {
-      setIsDeleting(false);
+      throw new Error(errorMsg);
     }
-  };
+
+    // ✅ Éxito real
+    setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+    addToast('success', `Usuario ${userToDelete.name} eliminado exitosamente`);
+    setIsDeleteModalOpen(false);
+    setUserToDelete(null);
+  } catch (error: any) {
+    console.error('Error al eliminar usuario:', error);
+    // ❌ NADA DE MOCK → no se elimina del estado local
+    addToast('error', error.message || 'No se pudo eliminar el usuario');
+    // El modal se mantiene abierto para que el usuario intente de nuevo o cancele
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
