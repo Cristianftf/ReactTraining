@@ -31,7 +31,8 @@ public class UserService {
     }
 
     public User getUser(String name){ 
-        return userRepository.findByName(name);
+        return userRepository.findByName(name).orElseThrow(() -> new ResponseStatusException(
+            HttpStatus.NOT_FOUND, "Usuario con nombre " + name + " no encontrado"));
     }
 
 

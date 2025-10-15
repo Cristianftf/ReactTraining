@@ -2,6 +2,8 @@ package com.spring_boot_training.demo.repository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,7 +14,7 @@ import com.spring_boot_training.demo.model.User;
 public interface UserRepository extends JpaRepository<User, Long> {
     User findByEmail(String email);
     
-    User findByName(String name);
+    Optional <User> findByName(String name);
 
     boolean existsByEmail(String email);
 
