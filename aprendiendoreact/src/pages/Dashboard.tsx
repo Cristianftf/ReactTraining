@@ -4,6 +4,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsive
 import { useAuth } from '../context/AuthContext';
 import './dashboard.css';
 
+
 interface Stats {
   totalUsers: number;
   adminUsers: number;
@@ -36,47 +37,50 @@ export function Dashboard() {
   const fetchStats = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/stats/overview');
-      if (response.ok) {
-        const data = await response.json();
-        setStats(data);
-      } else {
-        throw new Error('Error al cargar estadísticas');
+      
+      if (!response.ok) {
+        let errorMsg = 'Error al cargar las estadísticas';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || response.statusText || errorMsg;
+        } catch {
+          errorMsg = response.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      // Mock data for demo
-      setStats({
-        totalUsers: 127,
-        adminUsers: 8,
-        regularUsers: 119,
-        recentSignups: 23,
-      });
+
+      const data: Stats = await response.json();
+      setStats(data);
+    } catch (error: any) {
+      console.error('Error al cargar estadísticas:', error);
+      // ❌ NO hay mock → se mantienen los valores iniciales (0)
+      // Opcional: podrías mostrar un mensaje en UI, pero no datos falsos
     } finally {
       setLoading(false);
     }
   };
 
-  
   const fetchChartData = async () => {
     try {
       const response = await fetch('http://localhost:8000/api/stats/chart');
-      if (response.ok) {
-        const data = await response.json();
-        setChartData(data);
-      } else {
-        throw new Error('Error al cargar datos del gráfico');
+      
+      if (!response.ok) {
+        let errorMsg = 'Error al cargar los datos del gráfico';
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData.message || response.statusText || errorMsg;
+        } catch {
+          errorMsg = response.statusText || errorMsg;
+        }
+        throw new Error(errorMsg);
       }
-    } catch (error) {
-      console.error('Error:', error);
-      // Mock data for demo
-      setChartData([
-        { name: 'Enero', usuarios: 45, admins: 3 },
-        { name: 'Febrero', usuarios: 52, admins: 4 },
-        { name: 'Marzo', usuarios: 61, admins: 5 },
-        { name: 'Abril', usuarios: 73, admins: 6 },
-        { name: 'Mayo', usuarios: 89, admins: 7 },
-        { name: 'Junio', usuarios: 119, admins: 8 },
-      ]);
+
+      const data: ChartData[] = await response.json();
+      setChartData(data);
+    } catch (error: any) {
+      console.error('Error al cargar datos del gráfico:', error);
+      // ❌ NO hay mock → se mantiene como array vacío
+      setChartData([]); // gráfico vacío
     }
   };
 
@@ -86,28 +90,28 @@ export function Dashboard() {
       value: stats.totalUsers,
       icon: FiUsers,
       color: 'primary',
-      change: '+12%',
+      change: stats.totalUsers > 0 ? '+12%' : '—', // Evita mostrar cambio si no hay datos
     },
     {
       title: 'Administradores',
       value: stats.adminUsers,
       icon: FiShield,
       color: 'accent',
-      change: '+2',
+      change: stats.adminUsers > 0 ? `+${stats.adminUsers}` : '—',
     },
     {
       title: 'Usuarios Regulares',
       value: stats.regularUsers,
       icon: FiUserCheck,
       color: 'info',
-      change: '+10%',
+      change: stats.regularUsers > 0 ? '+10%' : '—',
     },
     {
       title: 'Nuevos (30 días)',
       value: stats.recentSignups,
       icon: FiTrendingUp,
       color: 'success',
-      change: '+23',
+      change: stats.recentSignups > 0 ? `+${stats.recentSignups}` : '—',
     },
   ];
 
