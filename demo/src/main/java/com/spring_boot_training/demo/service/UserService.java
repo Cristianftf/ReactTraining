@@ -20,7 +20,7 @@ public class UserService {
     }
 
     public User getUser(String name){ 
-        return userRepository.findByName(name);
+        return userRepository.findByName(name).orElseThrow(()->new RuntimeException("no se encuentra usuario con nombre "+name));
     }
 
     public List<User> getAllUsers(){ 
