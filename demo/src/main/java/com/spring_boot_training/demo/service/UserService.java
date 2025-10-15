@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -36,12 +35,14 @@ public class UserService {
     }
 
 
+    // Obtener todos los usuarios con paginación y ordenados por nombre
     public List<User> getAllUsers(){ 
         Pageable pageable = PageRequest.of(0, 10, Sort.by("name").ascending());
         return userRepository.findAll(pageable).getContent();
 
     }
 
+    // Eliminar un usuario por su ID
     public void deleteUser(long id){
         if (!userRepository.existsById(id)) {
             throw new ResponseStatusException(
@@ -53,6 +54,8 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+
+    // Crear un nuevo usuario
     public User addUser(UserDto userdto){
         if(userRepository.existsByEmail(userdto.getEmail())){
             throw new ResponseStatusException(
@@ -66,16 +69,19 @@ public class UserService {
         return userRepository.save(usuario);
     }
 
+    // Obtener usuarios por rol
     public List<User> getUsersByRole(String role){
         return userRepository.findUserByRoleList(role);
     }
 
+    // Actualizar el rol de un usuario
     public void updateUserRole(long id, String role){
         User user = userRepository.findById(id);
         user.rol = role;
         userRepository.save(user);
     }
 
+    // Actualizar un usuario existente
     public User updateUser(long id, UserDto userDto) {
         User existingUser = userRepository.findById(id);
         if (existingUser == null) {
