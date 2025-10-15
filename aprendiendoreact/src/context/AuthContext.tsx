@@ -26,6 +26,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
+  // Simulated login function
   const login = async (credentials: LoginCredentials) => {
     try {
       const response = await fetch('http://localhost:8000/api/auth/login', {
