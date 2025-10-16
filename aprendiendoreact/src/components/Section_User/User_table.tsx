@@ -4,6 +4,7 @@ import type { User, UserDto } from "../../types";
 import { UserModal } from "./UserModal";
 import { DeleteConfirmModal } from "./DeleteConfirmModal";
 import { ToastContainer, type ToastMessage } from "../Toast/Toast";
+import { usersApi } from "../../services/api";
 import "./userTable.css";
 
 export function UserTable() {
@@ -30,26 +31,20 @@ export function UserTable() {
   }, []);
 
   const fetchUsers = async () => {
-  setLoading(true); // ✅ Activar loading
-  setError(""); // Limpiar error previo
-  try {
-    const response = await fetch('http://localhost:8000/api/users');
-    
-    if (!response.ok) {
-      throw new Error('Error al cargar la lista de usuarios');
+    setLoading(true);
+    setError("");
+    try {
+      const data = await usersApi.getAll();
+      setUsers(data);
+    } catch (error: any) {
+      console.error('Error al cargar usuarios:', error);
+      addToast('error', error.message || 'No se pudo cargar la lista de usuarios');
+      setUsers([]);
+      setError(error.message || 'No se pudo cargar la lista de usuarios');
+    } finally {
+      setLoading(false);
     }
-
-    const data = await response.json();
-    setUsers(data);
-  } catch (error: any) {
-    console.error('Error al cargar usuarios:', error);
-    addToast('error', error.message || 'No se pudo cargar la lista de usuarios');
-    setUsers([]); // Limpiar para evitar datos obsoletos
-    setError(error.message || 'No se pudo cargar la lista de usuarios'); // Opcional
-  } finally {
-    setLoading(false); // ✅ Desactivar loading
-  }
-};
+  };
 
   // Toast functions
   const addToast = (type: ToastMessage['type'], message: string) => {
@@ -75,59 +70,29 @@ export function UserTable() {
     setIsModalOpen(true);
   };
 
-  // Save user (create or update)
   const handleSaveUser = async (userData: UserDto, userId?: number) => {
-  try {
-    let response: Response;
-    let url = 'http://localhost:8000/api/users';
+    try {
+      let savedUser: User;
 
-    if (modalMode === 'create') {
-      response = await fetch(`${url}/add`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-    } else if (userId) {
-      response = await fetch(`${url}/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
-      });
-    } else {
-      throw new Error('ID de usuario no válido para actualización');
-    }
-
-    if (!response.ok) {
-      // Intentar leer mensaje de error del backend
-      let errorMsg = 'Error desconocido';
-      try {
-        const errorData = await response.json();
-        errorMsg = errorData.message || response.statusText || 'Error al guardar usuario';
-      } catch {
-        errorMsg = response.statusText || 'Error al guardar usuario';
+      if (modalMode === 'create') {
+        savedUser = await usersApi.create(userData);
+        setUsers(prev => [...prev, savedUser]);
+        addToast('success', `Usuario ${userData.name} creado exitosamente`);
+      } else if (userId) {
+        savedUser = await usersApi.update(userId, userData);
+        setUsers(prev => prev.map(u => u.id === userId ? savedUser : u));
+        addToast('success', `Usuario ${userData.name} actualizado exitosamente`);
+      } else {
+        throw new Error('ID de usuario no válido para actualización');
       }
-      throw new Error(errorMsg);
+
+      setIsModalOpen(false);
+    } catch (error: any) {
+      console.error('Error al guardar usuario:', error);
+      addToast('error', error.message || 'No se pudo guardar el usuario');
+      setIsModalOpen(false);
     }
-
-    const savedUser = await response.json();
-
-    // Actualizar estado local
-    if (modalMode === 'create') {
-      setUsers(prev => [...prev, savedUser]);
-      addToast('success', `Usuario ${userData.name} creado exitosamente`);
-    } else {
-      setUsers(prev => prev.map(u => u.id === userId ? savedUser : u));
-      addToast('success', `Usuario ${userData.name} actualizado exitosamente`);
-    }
-
-    setIsModalOpen(false);
-  } catch (error: any) {
-    console.error('Error al guardar usuario:', error);
-    addToast('error', error.message || 'No se pudo guardar el usuario');
-    // ❌ NO hay mock → no se añade ni actualiza nada en la UI
-    setIsModalOpen(false); // cierra el modal igual, pero sin cambios
-  }
-};
+  };
 
   // Delete user - open confirmation modal
   const handleDeleteClick = (user: User) => {
@@ -135,42 +100,23 @@ export function UserTable() {
     setIsDeleteModalOpen(true);
   };
 
-  // Confirm delete
   const handleConfirmDelete = async () => {
-  if (!userToDelete) return;
+    if (!userToDelete) return;
 
-  setIsDeleting(true);
-  try {
-    const response = await fetch(`http://localhost:8000/api/users/${userToDelete.id}`, {
-      method: 'DELETE',
-    });
-
-    if (!response.ok) {
-      // Intentar obtener mensaje del backend
-      let errorMsg = 'Error al eliminar el usuario';
-      try {
-        const errorData = await response.json();
-        errorMsg = errorData.message || response.statusText || errorMsg;
-      } catch {
-        errorMsg = response.statusText || errorMsg;
-      }
-      throw new Error(errorMsg);
+    setIsDeleting(true);
+    try {
+      await usersApi.delete(userToDelete.id);
+      setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
+      addToast('success', `Usuario ${userToDelete.name} eliminado exitosamente`);
+      setIsDeleteModalOpen(false);
+      setUserToDelete(null);
+    } catch (error: any) {
+      console.error('Error al eliminar usuario:', error);
+      addToast('error', error.message || 'No se pudo eliminar el usuario');
+    } finally {
+      setIsDeleting(false);
     }
-
-    // ✅ Éxito real
-    setUsers(prev => prev.filter(u => u.id !== userToDelete.id));
-    addToast('success', `Usuario ${userToDelete.name} eliminado exitosamente`);
-    setIsDeleteModalOpen(false);
-    setUserToDelete(null);
-  } catch (error: any) {
-    console.error('Error al eliminar usuario:', error);
-    // ❌ NADA DE MOCK → no se elimina del estado local
-    addToast('error', error.message || 'No se pudo eliminar el usuario');
-    // El modal se mantiene abierto para que el usuario intente de nuevo o cancele
-  } finally {
-    setIsDeleting(false);
-  }
-};
+  };
 
   const filteredUsers = users.filter(user =>
     user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||

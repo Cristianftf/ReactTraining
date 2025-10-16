@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import type { User, LoginCredentials } from '../types';
+import type { User, LoginCredentials, UserDto } from '../types';
+import { authApi } from '../services/api';
 
 interface AuthContextType {
   user: User | null;
@@ -7,6 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
+  register: (userData: UserDto) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,44 +28,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false);
   }, []);
 
-  // Simulated login function
   const login = async (credentials: LoginCredentials) => {
-    try {
-      const response = await fetch('http://localhost:8000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(credentials),
-      });
+    const { token, user } = await authApi.login(credentials);
+    
+    // Store user and token
+    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('token', token);
+    setUser(user);
+  };
 
-      if (!response.ok) {
-        throw new Error('Credenciales inválidas');
-      }
-
-      const data = await response.json();
-      
-      // Store user and token
-      localStorage.setItem('user', JSON.stringify(data.user));
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-    } catch (error) {
-      // For demo purposes, simulate successful login
-      console.error('Error en login:', error);
-      
-      // Mock successful login
-      const mockUser: User = {
-        id: 1,
-        name: 'Admin User',
-        email: credentials.email,
-        password: '',
-        rol: 'admin'
-      };
-      
-      localStorage.setItem('user', JSON.stringify(mockUser));
-      localStorage.setItem('token', 'mock-token-123');
-      setUser(mockUser);
-    }
+  const register = async (userData: UserDto) => {
+    await authApi.register(userData);
   };
 
   const logout = () => {
@@ -80,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         login,
         logout,
+        register,
       }}
     >
       {children}

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { FiUsers, FiUserCheck, FiShield, FiTrendingUp } from 'react-icons/fi';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '../context/AuthContext';
+import { statsApi } from '../services/api';
 import './dashboard.css';
 
 
@@ -17,6 +18,11 @@ interface ChartData {
   usuarios: number;
   admins: number;
 }
+
+// Toast notification helper (simple implementation)
+const addToast = (type: 'error' | 'success', message: string) => {
+  console.error(`[${type.toUpperCase()}]`, message);
+};
 
 export function Dashboard() {
   const { user } = useAuth();
@@ -36,25 +42,11 @@ export function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/stats/overview');
-      
-      if (!response.ok) {
-        let errorMsg = 'Error al cargar las estadísticas';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || response.statusText || errorMsg;
-        } catch {
-          errorMsg = response.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data: Stats = await response.json();
+      const data = await statsApi.getOverview();
       setStats(data);
     } catch (error: any) {
       console.error('Error al cargar estadísticas:', error);
-      // ❌ NO hay mock → se mantienen los valores iniciales (0)
-      // Opcional: podrías mostrar un mensaje en UI, pero no datos falsos
+      addToast('error', error.message || 'No se pudieron cargar las estadísticas');
     } finally {
       setLoading(false);
     }
@@ -62,25 +54,11 @@ export function Dashboard() {
 
   const fetchChartData = async () => {
     try {
-      const response = await fetch('http://localhost:8000/api/stats/chart');
-      
-      if (!response.ok) {
-        let errorMsg = 'Error al cargar los datos del gráfico';
-        try {
-          const errorData = await response.json();
-          errorMsg = errorData.message || response.statusText || errorMsg;
-        } catch {
-          errorMsg = response.statusText || errorMsg;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data: ChartData[] = await response.json();
+      const data = await statsApi.getChartData();
       setChartData(data);
     } catch (error: any) {
       console.error('Error al cargar datos del gráfico:', error);
-      // ❌ NO hay mock → se mantiene como array vacío
-      setChartData([]); // gráfico vacío
+      setChartData([]);
     }
   };
 

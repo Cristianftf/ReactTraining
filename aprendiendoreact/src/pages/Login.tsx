@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { FiMail, FiLock, FiLogIn } from 'react-icons/fi';
 import { useAuth } from '../context/AuthContext';
 import type { LoginCredentials } from '../types';
@@ -158,7 +158,10 @@ export function Login() {
 
           <div className="login-footer">
             <p className="demo-credentials">
-              <strong>Demo:</strong> Usa cualquier email y contraseña (mínimo 6 caracteres)
+              ¿No tienes cuenta?{' '}
+              <Link to="/register" className="forgot-password">
+                Regístrate aquí
+              </Link>
             </p>
           </div>
         </div>
