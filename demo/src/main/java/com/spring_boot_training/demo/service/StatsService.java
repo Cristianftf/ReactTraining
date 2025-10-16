@@ -4,10 +4,13 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+
 import com.spring_boot_training.demo.dto.ChartDataDTO;
 import com.spring_boot_training.demo.dto.StatsOverviewDTO;
 import com.spring_boot_training.demo.repository.UserRepository;
 
+@Service 
 public class StatsService {
 
      private final UserRepository userRepository;
@@ -18,8 +21,8 @@ public class StatsService {
 
     public StatsOverviewDTO getOverviewStats() {
         long totalUsers = userRepository.count();
-        long adminUsers = userRepository.countByRole("ADMIN");
-        long regularUsers = userRepository.countByRole("USER");
+        long adminUsers = userRepository.countByRol("ADMIN");
+        long regularUsers = userRepository.countByRol("USER");
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         long recentSignups = userRepository.countByCreatedAtAfter(thirtyDaysAgo);
 

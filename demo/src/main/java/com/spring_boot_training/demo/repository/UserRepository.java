@@ -22,18 +22,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
     
     boolean existsByEmailAndIdNot(String email, Long id);
     
-    User findById(long id);
+   
+    List<User> findByRol(String rol);
     
-    void deleteById(long id);
     
-    List<User> findUserByRoleList(String role);
+
     
     Boolean existsByName(String name);
 
     Boolean existsById(long id);
 
     
-    Long countByRole(String role);
+    Long countByRol(String rol);
 
     long countByCreatedAtAfter(LocalDateTime date);
 
