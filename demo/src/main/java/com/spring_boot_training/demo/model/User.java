@@ -1,8 +1,10 @@
 package com.spring_boot_training.demo.model;
-
-
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -32,6 +34,10 @@ public class User {
     public String rol;
 
     private LocalDateTime createdAt;
+    
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + rol.toUpperCase()));
+    }
 
     public User(String name, String email, String password, String rol) {
         this.name = name;
