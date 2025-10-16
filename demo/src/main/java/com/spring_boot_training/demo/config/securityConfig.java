@@ -1,4 +1,4 @@
-package com.spring_boot_training.config;
+package com.spring_boot_training.demo.config;
 import com.spring_boot_training.demo.service.security.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
