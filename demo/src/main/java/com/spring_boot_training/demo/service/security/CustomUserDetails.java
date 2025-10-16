@@ -1,8 +1,11 @@
-package com.spring_boot_training.demo.model;
+package com.spring_boot_training.demo.service.security;
 
 import org.springframework.security.core.GrantedAuthority;
 
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.spring_boot_training.demo.model.User;
+
 import java.util.Collection;
 import java.util.Collections;
 

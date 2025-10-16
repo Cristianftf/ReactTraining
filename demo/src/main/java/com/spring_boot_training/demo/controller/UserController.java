@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import com.spring_boot_training.demo.dto.UserDto;
 import com.spring_boot_training.demo.service.UserService;
 
-import jakarta.validation.Valid;
-
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;

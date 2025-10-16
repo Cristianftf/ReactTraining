@@ -59,13 +59,16 @@ public class UserService {
    
 
     // Obtener usuarios por rol
-    public List<User> getUsersByRole(String role){
-        return userRepository.findUserByRoleList(role);
+    public List<User> getUsersByRolSafe(String rol) {
+        if (!"admin".equals(rol) && !"user".equals(rol)) {
+            throw new IllegalArgumentException("Rol inválido: " + rol + ". Use 'admin' o 'user'");
+        }
+        return userRepository.findByRol(rol);
     }
 
     // Actualizar el rol de un usuario
     public void updateUserRole(long id, String role){
-        User user = userRepository.findById(id);
+        User user = userRepository.findById(id).orElseThrow();
         user.rol = role;
         userRepository.save(user);
     }

@@ -1,49 +1,47 @@
 package com.spring_boot_training.demo.controller;
 
 
-import com.spring_boot_training.demo.model.User;
-import com.spring_boot_training.demo.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.spring_boot_training.demo.dto.AuthResponse;
+import com.spring_boot_training.demo.dto.LoginRequest;
+import com.spring_boot_training.demo.service.security.CustomUserDetailsService;
+import com.spring_boot_training.demo.service.security.JwtService;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/apiu/auth")
 public class AuthController {
+ private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
+    private final CustomUserDetailsService customUserDetailsService; // 👈 Inyecta el SERVICE
 
-    @Autowired
-    private AuthenticationManager authenticationManager;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody User user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
+    public AuthController(
+        AuthenticationManager authenticationManager,
+        JwtService jwtService,
+        CustomUserDetailsService customUserDetailsService
+    ) {
+        this.authenticationManager = authenticationManager;
+        this.jwtService = jwtService;
+        this.customUserDetailsService = customUserDetailsService;
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody User loginRequest) {
-        try {
-            Authentication authentication = authenticationManager.authenticate(
-                    new UsernamePasswordAuthenticationToken(
-                            loginRequest.getName(),
-                            loginRequest.getPassword()
-                    )
-            );
-            return ResponseEntity.ok("Login successful for user: " + authentication.getName());
-        } catch (AuthenticationException e) {
-            return ResponseEntity.status(401).body("Invalid credentials");
-        }
+    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        // 1. Autenticar (esto valida credenciales)
+        authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+        );
+
+        // 2. Cargar detalles del usuario (para generar el token)
+        org.springframework.security.core.userdetails.UserDetails userDetails =
+            customUserDetailsService.loadUserByUsername(request.getEmail()); // ✅ Correcto
+
+        // 3. Generar token
+        String jwtToken = jwtService.generateToken(userDetails);
+
+        return ResponseEntity.ok(new AuthResponse(jwtToken));
     }
 }

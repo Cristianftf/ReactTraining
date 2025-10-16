@@ -12,34 +12,36 @@ import com.spring_boot_training.demo.model.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, Long> {
-    User findByEmail(String email);
+    Optional<User> findByEmail(String email);
     
     Optional <User> findByName(String name);
+    
 
     boolean existsByEmail(String email);
 
     
     boolean existsByEmailAndIdNot(String email, Long id);
     
-    User findById(long id);
+   
+    List<User> findByRol(String rol);
     
-    void deleteById(long id);
     
-    List<User> findUserByRoleList(String role);
+
     
     Boolean existsByName(String name);
 
     Boolean existsById(long id);
 
-    Long countByRole(String role);
+    
+    Long countByRol(String rol);
 
     long countByCreatedAtAfter(LocalDateTime date);
 
     @Query("""
         SELECT 
             FUNCTION('to_char', u.createdAt, 'Month') AS monthName,
-            COUNT(CASE WHEN u.role = 'USER' THEN 1 END) AS userCount,
-            COUNT(CASE WHEN u.role = 'ADMIN' THEN 1 END) AS adminCount
+            COUNT(CASE WHEN u.rol = 'USER' THEN 1 END) AS userCount,
+            COUNT(CASE WHEN u.rol = 'ADMIN' THEN 1 END) AS adminCount
         FROM User u
         WHERE u.createdAt >= :sixMonthsAgo
         GROUP BY FUNCTION('to_char', u.createdAt, 'Month'), FUNCTION('date_trunc', 'month', u.createdAt)
