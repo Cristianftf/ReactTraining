@@ -1,4 +1,4 @@
-package com.spring_boot_training.demo.service.security;
+package com.spring_boot_training.demo.security.service;
 
 import java.util.HashMap;
 
@@ -15,11 +15,19 @@ import java.util.Date;
 import java.util.Map;
 import java.util.function.Function;
 
-
+/**
+ * Servicio responsable de:
+ * - Generar tokens JWT
+ * - Extraer información (claims) del token
+ * - Validar token (firma, expiración y pertenencia al usuario)
+ *
+ * Usa JJWT (io.jsonwebtoken).
+ */
 @Service
 public class JwtService {
     @Value("${jwt.secret}")
     private String SECRET_KEY;
+    
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }

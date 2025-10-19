@@ -1,10 +1,10 @@
 package com.spring_boot_training.demo.controller;
 
 
-import com.spring_boot_training.demo.dto.AuthResponse;
-import com.spring_boot_training.demo.dto.LoginRequest;
-import com.spring_boot_training.demo.service.security.CustomUserDetailsService;
-import com.spring_boot_training.demo.service.security.JwtService;
+import com.spring_boot_training.demo.security.dto.AuthResponse;
+import com.spring_boot_training.demo.security.dto.LoginRequest;
+import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
+import com.spring_boot_training.demo.security.service.JwtService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;

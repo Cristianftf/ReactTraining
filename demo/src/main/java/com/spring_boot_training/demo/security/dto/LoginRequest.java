@@ -1,4 +1,4 @@
-package com.spring_boot_training.demo.dto;
+package com.spring_boot_training.demo.security.dto;
 
 public class LoginRequest {
     private String email;

@@ -1,4 +1,4 @@
-package com.spring_boot_training.demo.service.security;
+package com.spring_boot_training.demo.security.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,13 +13,21 @@ import com.spring_boot_training.demo.repository.UserRepository;
 public class CustomUserDetailsService implements UserDetailsService {
     @Autowired
     UserRepository userRepository;
+    /**
+     * Único método obligatorio de la interfaz.
+     * Busca en la BD y devuelve un UserDetails (nuestra entidad User implementa UserDetails).
+     *
+     * @param username nombre de usuario con el que intentar autenticar
+     * @return UserDetails del usuario encontrado
+     * @throws UsernameNotFoundException si no existe el usuario
+     */
 
      @Override
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
         User user = userRepository.findByEmail(email)
             .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado con email: " + email));
         
-        return new CustomUserDetails(user); // ← Aquí sí usas CustomUserDetails
+        return user; 
     }
 
 }

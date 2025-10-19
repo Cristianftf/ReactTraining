@@ -1,4 +1,4 @@
-package com.spring_boot_training.demo.service.security;
+package com.spring_boot_training.demo.security.service;
 
 import org.springframework.security.core.GrantedAuthority;
 
@@ -30,7 +30,7 @@ public class CustomUserDetails implements UserDetails{
 
     @Override
     public String getUsername() {
-        return user.getName();
+        return user.getEmail(); // ✅ Debe retornar el email, no el nombre
     }
 
     @Override
