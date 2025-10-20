@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class AuthController {
  private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
-    private final CustomUserDetailsService customUserDetailsService; // 👈 Inyecta el SERVICE
+    private final CustomUserDetailsService customUserDetailsService; 
 
     public AuthController(
         AuthenticationManager authenticationManager,

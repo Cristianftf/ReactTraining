@@ -1,7 +1,15 @@
 package com.spring_boot_training.demo.security.dto;
 
+import io.micrometer.common.lang.NonNull;
+import jakarta.validation.constraints.NotBlank;
+
 public class LoginRequest {
+    @NonNull
+    @NotBlank
     private String email;
+    
+    @NonNull
+    @NotBlank    
     private String password;
 
     public String getEmail() {
