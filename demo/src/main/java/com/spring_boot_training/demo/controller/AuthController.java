@@ -1,47 +1,66 @@
 package com.spring_boot_training.demo.controller;
 
 
+import com.spring_boot_training.demo.dto.UserDto;
+import com.spring_boot_training.demo.model.User;
+import com.spring_boot_training.demo.repository.UserRepository;
 import com.spring_boot_training.demo.security.dto.AuthResponse;
 import com.spring_boot_training.demo.security.dto.LoginRequest;
 import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
 import com.spring_boot_training.demo.security.service.JwtService;
+import com.spring_boot_training.demo.service.UserService;
+
+import java.util.HashMap;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/apiu/auth")
 public class AuthController {
- private final AuthenticationManager authenticationManager;
+
+    private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final CustomUserDetailsService customUserDetailsService; 
+    
+    private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthController(
         AuthenticationManager authenticationManager,
         JwtService jwtService,
-        CustomUserDetailsService customUserDetailsService
+        CustomUserDetailsService customUserDetailsService,
+        UserService userService,
+        PasswordEncoder passwordEncoder
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
+        this.userService = userService;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
-        // 1. Autenticar (esto valida credenciales)
-        authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
-        );
-
-        // 2. Cargar detalles del usuario (para generar el token)
-        org.springframework.security.core.userdetails.UserDetails userDetails =
-            customUserDetailsService.loadUserByUsername(request.getEmail()); // ✅ Correcto
-
-        // 3. Generar token
-        String jwtToken = jwtService.generateToken(userDetails);
-
-        return ResponseEntity.ok(new AuthResponse(jwtToken));
+        // autenticar
+        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        // cargar userDetails
+        UserDetails ud = customUserDetailsService.loadUserByUsername(request.getEmail());
+        // generar token (puedes agregar roles y claims en el map)
+        var extraClaims = new HashMap<String, Object>();
+        String token = jwtService.generateToken(extraClaims, ud);
+        return ResponseEntity.ok(new AuthResponse(token));
     }
+
+     @PostMapping("/register")
+    public ResponseEntity<String> register(@RequestBody UserDto request) {        
+       userService.addUser(request);                
+        return ResponseEntity.ok("User registered successfully");        
+    }
+
+
 }
