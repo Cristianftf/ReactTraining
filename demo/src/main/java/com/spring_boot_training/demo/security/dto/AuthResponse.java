@@ -1,6 +1,11 @@
 package com.spring_boot_training.demo.security.dto;
 
+import io.micrometer.common.lang.NonNull;
+import jakarta.validation.constraints.NotBlank;
+
 public class AuthResponse {
+    @NotBlank
+    @NonNull
     private String token;
     public AuthResponse(String token) {
         this.token = token;

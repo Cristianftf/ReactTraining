@@ -7,7 +7,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.spring_boot_training.demo.model.User;
 
 import java.util.Collection;
-import java.util.Collections;
 
 public class CustomUserDetails implements UserDetails{
     private final User user;
@@ -18,9 +17,7 @@ public class CustomUserDetails implements UserDetails{
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        
-        // Aquí podrías devolver los roles si los tuvieras
-        return Collections.emptyList();
+        return user.getAuthorities();
     }
 
     @Override
@@ -30,7 +27,7 @@ public class CustomUserDetails implements UserDetails{
 
     @Override
     public String getUsername() {
-        return user.getEmail(); // ✅ Debe retornar el email, no el nombre
+        return user.getEmail();
     }
 
     @Override

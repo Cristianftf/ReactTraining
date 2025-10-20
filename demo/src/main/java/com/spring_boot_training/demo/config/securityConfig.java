@@ -1,4 +1,5 @@
 package com.spring_boot_training.demo.config;
+import com.spring_boot_training.demo.security.service.JwtService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -9,14 +10,33 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
+import com.spring_boot_training.demo.security.service.JwtAuthenticationEntryPoint;
+import com.spring_boot_training.demo.security.service.JwtAuthenticationFilter;
+
 import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 public class securityConfig {
+
+    private final CustomUserDetailsService customUserDetailsService;
+
+    private final JwtService jwtService;
+     private final JwtAuthenticationEntryPoint entryPoint;
+
+
+    securityConfig(JwtService jwtService, CustomUserDetailsService customUserDetailsService,JwtAuthenticationEntryPoint entryPoint) {
+        this.jwtService = jwtService;
+        this.customUserDetailsService = customUserDetailsService;
+        this.entryPoint = entryPoint;
+
+
+    }
 
   
 // ✅ Expone el AuthenticationManager como bean
@@ -26,11 +46,24 @@ public class securityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    // ✅ Filtro de autenticación JWT
+    @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter(jwtService,customUserDetailsService);
+    }
+
+
+
+
     // ✅ PasswordEncoder (necesario para login)
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
-    }
+    } 
+
+
+
+
 
     // ✅ Configuración de CORS
     //esto se utiliza para permitir que el frontend acceda al backend sin problemas de CORS
@@ -48,20 +81,27 @@ public class securityConfig {
         return source;
     }
 
-    // ✅ Configuración básica de seguridad 
+
+
+
+    // ✅ Configuración básica de seguridad (ajusta según tus necesidades)
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .exceptionHandling(ex->ex.authenticationEntryPoint(entryPoint))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers("/apiu/auth/**").permitAll()  // Permite acceso a login
-                .requestMatchers("/api/users/add").permitAll()  // Permite registro sin autenticación
+                .requestMatchers("/api/users/add").permitAll() // Permite registro sin autenticación
                 .requestMatchers("/api/users/**").permitAll()  // Temporal: permite acceso a usuarios
                 .requestMatchers("/api/stats/**").permitAll()  // Temporal: permite acceso a stats
                 .anyRequest().permitAll()  // Temporal: permite todo
             );
+            //esto es para agregar el filtro antes del filtro de autenticación por defecto
+            http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }

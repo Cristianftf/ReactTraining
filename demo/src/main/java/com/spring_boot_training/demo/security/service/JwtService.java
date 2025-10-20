@@ -9,6 +9,8 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Value;
 import java.security.Key;
 import java.util.Date;
@@ -25,13 +27,28 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
-
-    @Value("${jwt.secret}")
+    @Value("${jwt.secret}")  
     private String SECRET_KEY;
 
-    private  Long EXPIRATION_TIME = 1000 * 60 * 60 * 24L; // 24 horas
-   
-    // Extrae el email (subject) del token JWT
+    @Value("${jwt.expiration}")
+    private long jwtExpirationMs;
+
+    private Key signingKey;
+
+    //esto es para inicializar la clave de firma después de inyectar SECRET_KEY
+    @PostConstruct
+    public void init() {
+        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        signingKey = Keys.hmacShaKeyFor(keyBytes);
+    }
+     // Validación básica: username y expiración
+    public boolean validateToken(String token, UserDetails userDetails) {
+        final String username = extractEmail(token);
+        return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
+    }
+
+
+    
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -48,6 +65,8 @@ public class JwtService {
         return generateToken(new HashMap<>(), userDetails);
     }
 
+
+    //Genera un token con claims adicionales
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
         return Jwts
             .builder()
@@ -58,6 +77,8 @@ public class JwtService {
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact();
     }
+
+
 
     public boolean isTokenValid(String token, UserDetails userDetails) {
         final String email = extractEmail(token);
