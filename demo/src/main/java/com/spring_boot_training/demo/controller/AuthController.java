@@ -2,8 +2,6 @@ package com.spring_boot_training.demo.controller;
 
 
 import com.spring_boot_training.demo.dto.UserDto;
-import com.spring_boot_training.demo.model.User;
-import com.spring_boot_training.demo.repository.UserRepository;
 import com.spring_boot_training.demo.security.dto.AuthResponse;
 import com.spring_boot_training.demo.security.dto.LoginRequest;
 import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
@@ -16,7 +14,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -28,20 +25,20 @@ public class AuthController {
     private final CustomUserDetailsService customUserDetailsService; 
     
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
+    
 
     public AuthController(
         AuthenticationManager authenticationManager,
         JwtService jwtService,
         CustomUserDetailsService customUserDetailsService,
-        UserService userService,
-        PasswordEncoder passwordEncoder
+        UserService userService
+        
     ) {
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
         this.userService = userService;
-        this.passwordEncoder = passwordEncoder;
+        
     }
 
     @PostMapping("/login")
