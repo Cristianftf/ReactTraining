@@ -6,10 +6,14 @@ import com.spring_boot_training.demo.security.dto.LoginRequest;
 import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
 import com.spring_boot_training.demo.security.service.JwtService;
 
+import jakarta.validation.Valid;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
+ 
 
 @RestController
 @RequestMapping("/apiu/auth")
@@ -29,14 +33,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         // 1. Autenticar (esto valida credenciales)
         authenticationManager.authenticate(
+            
             new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
         // 2. Cargar detalles del usuario (para generar el token)
-        org.springframework.security.core.userdetails.UserDetails userDetails =
+        UserDetails userDetails =
             customUserDetailsService.loadUserByUsername(request.getEmail()); // ✅ Correcto
 
         // 3. Generar token

@@ -30,6 +30,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    // Obtener un usuario por su nombre
     public User getUser(String name){ 
         return userRepository.findByName(name).orElseThrow(() -> new ResponseStatusException(
             HttpStatus.NOT_FOUND, "Usuario con nombre " + name + " no encontrado"));
@@ -79,6 +80,8 @@ public class UserService {
         }
 
         String encodedPassword = passwordEncoder.encode(dto.getPassword());
+        System.out.println("password original "+dto.getPassword());
+        System.out.println("password resultante "+encodedPassword);
         User user = new User(
             dto.getName(),
             dto.getEmail(),
@@ -88,6 +91,7 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    // Actualizar un usuario existente
     public User updateUser(Long id, UserDto dto) {
         User existingUser = userRepository.findById(id)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));

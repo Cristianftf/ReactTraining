@@ -33,6 +33,7 @@ public class securityConfig {
     }
 
     // ✅ Configuración de CORS
+    //esto se utiliza para permitir que el frontend acceda al backend sin problemas de CORS
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
@@ -47,7 +48,7 @@ public class securityConfig {
         return source;
     }
 
-    // ✅ Configuración básica de seguridad (ajusta según tus necesidades)
+    // ✅ Configuración básica de seguridad 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http

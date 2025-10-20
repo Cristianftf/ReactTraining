@@ -25,18 +25,25 @@ import java.util.function.Function;
  */
 @Service
 public class JwtService {
+
     @Value("${jwt.secret}")
     private String SECRET_KEY;
-    
+
+    private  Long EXPIRATION_TIME = 1000 * 60 * 60 * 24L; // 24 horas
+   
+    // Extrae el email (subject) del token JWT
     public String extractEmail(String token) {
         return extractClaim(token, Claims::getSubject);
     }
 
+
+    // Extrae un claim específico del token JWT usando una función de resolución de claims
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
 
+    // Genera un token JWT para el usuario dado, sin claims adicionales
     public String generateToken(UserDetails userDetails) {
         return generateToken(new HashMap<>(), userDetails);
     }
