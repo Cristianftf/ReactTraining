@@ -41,7 +41,8 @@ public class JwtService {
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
         signingKey = Keys.hmacShaKeyFor(keyBytes);
     }
-     // Validación básica: username y expiración
+    // Validación básica: username y expiración (mantener método único validateToken)
+    // Nota: isTokenValid es un alias usado internamente si es necesario.
     public boolean validateToken(String token, UserDetails userDetails) {
         final String username = extractEmail(token);
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
@@ -68,21 +69,22 @@ public class JwtService {
 
     //Genera un token con claims adicionales
     public String generateToken(Map<String, Object> extraClaims, UserDetails userDetails) {
+        long now = System.currentTimeMillis();
         return Jwts
             .builder()
             .setClaims(extraClaims)
             .setSubject(userDetails.getUsername())
-            .setIssuedAt(new Date(System.currentTimeMillis()))
-            .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 60 * 24)) // 24h
+            .setIssuedAt(new Date(now))
+            .setExpiration(new Date(now + jwtExpirationMs))
             .signWith(getSignInKey(), SignatureAlgorithm.HS256)
             .compact();
     }
 
 
 
+    // alias para compatibilidad: mantener isTokenValid que delega en validateToken
     public boolean isTokenValid(String token, UserDetails userDetails) {
-        final String email = extractEmail(token);
-        return (email.equals(userDetails.getUsername())) && !isTokenExpired(token);
+        return validateToken(token, userDetails);
     }
 
     private boolean isTokenExpired(String token) {

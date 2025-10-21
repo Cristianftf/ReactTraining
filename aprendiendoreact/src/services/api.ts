@@ -1,160 +1,140 @@
-// API Service - Centralizes all API calls and configuration
+// apiService.ts
 import type { User, UserDto, LoginCredentials } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-// Helper function to get auth token
-const getAuthToken = (): string | null => {
-  return localStorage.getItem('token');
-};
+// ========== 🔐 UTILIDADES DE AUTENTICACIÓN ==========
+const getAuthToken = (): string | null => localStorage.getItem('token');
 
-// Helper function to handle API errors
-const handleApiError = async (response: Response): Promise<never> => {
-  let errorMessage = 'Error en la solicitud';
-  
+const decodeJWT = (token: string): any | null => {
   try {
-    const errorData = await response.json();
-    errorMessage = errorData.message || errorData.error || response.statusText;
-  } catch {
-    errorMessage = response.statusText || errorMessage;
-  }
-  
-  throw new Error(errorMessage);
-};
-
-// Helper function to make authenticated requests
-const fetchWithAuth = async (url: string, options: RequestInit = {}): Promise<Response> => {
-  const token = getAuthToken();
-  
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
-  
-  if (!response.ok) {
-    await handleApiError(response);
-  }
-  
-  return response;
-};
-
-// Decode JWT to get user info
-const decodeJWT = (token: string): any => {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
+    const payload = token.split('.')[1];
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
   } catch (error) {
     console.error('Error decoding JWT:', error);
     return null;
   }
 };
 
-// Auth API
+// ========== ⚠️ MANEJO GLOBAL DE ERRORES ==========
+const handleApiError = async (response: Response): Promise<never> => {
+  let message = 'Error en la solicitud';
+  try {
+    const data = await response.json();
+    message = data.message || data.error || response.statusText;
+  } catch {
+    message = response.statusText || message;
+  }
+  throw new Error(message);
+};
+
+// ========== 🌐 FUNCIONES BASE PARA FETCH ==========
+const fetchWithAuth = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
+  const token = getAuthToken();
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options.headers || {}),
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  const response = await fetch(`${API_BASE_URL}${url}`, {
+    ...options,
+    headers,
+  });
+
+  if (!response.ok) await handleApiError(response);
+
+  // Si la respuesta no tiene contenido (204) o no es JSON, devolvemos undefined o el texto crudo
+  if (response.status === 204) return undefined as unknown as T;
+  const contentType = response.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    const text = await response.text();
+    try {
+      return JSON.parse(text) as T;
+    } catch {
+      // si no es JSON válido, devolvemos texto como fallback
+      return text as unknown as T;
+    }
+  }
+
+  return response.json() as Promise<T>;
+};
+
+// ========== 🔒 API DE AUTENTICACIÓN ==========
 export const authApi = {
+  /**
+   * Inicia sesión en el sistema
+   */
   login: async (credentials: LoginCredentials): Promise<{ token: string; user: User }> => {
-    const response = await fetchWithAuth('/apiu/auth/login', {
+    const data = await fetchWithAuth<{ token: string }>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify(credentials),
     });
-    
-    const data = await response.json();
-    
-    // Decode JWT to get user info
+
     const decoded = decodeJWT(data.token);
-    
-    // Fetch full user details
-    const userResponse = await fetchWithAuth('/api/users');
-    const users: User[] = await userResponse.json();
-    const user = users.find(u => u.email === credentials.email);
-    
-    if (!user) {
-      throw new Error('Usuario no encontrado');
-    }
-    
-    return {
-      token: data.token,
-      user,
+    if (!decoded) throw new Error('Token inválido recibido del servidor');
+
+    // Construimos el usuario desde el token (sin llamar de nuevo al backend)
+    const user: User = {
+      id: decoded.id || decoded.sub || 0,
+      name: decoded.name || '',
+      email: decoded.email || credentials.email,
+      rol: decoded.rol || 'user',
+      password: ''
     };
+
+    return { token: data.token, user };
   },
-  
+
+  /**
+   * Registra un nuevo usuario
+   */
   register: async (userData: UserDto): Promise<User> => {
-    const response = await fetchWithAuth('/api/users/add', {
+    return fetchWithAuth<User>('/api/users/add', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
-    
-    return response.json();
   },
 };
 
-// Users API
+// ========== 👥 API DE USUARIOS ==========
 export const usersApi = {
-  getAll: async (): Promise<User[]> => {
-    const response = await fetchWithAuth('/api/users');
-    return response.json();
-  },
-  
-  create: async (userData: UserDto): Promise<User> => {
-    const response = await fetchWithAuth('/api/users/add', {
+  getAll: (): Promise<User[]> => fetchWithAuth<User[]>('/api/users'),
+
+  create: (userData: UserDto): Promise<User> =>
+    fetchWithAuth<User>('/api/users/add', {
       method: 'POST',
       body: JSON.stringify(userData),
-    });
-    return response.json();
-  },
-  
-  update: async (id: number, userData: UserDto): Promise<User> => {
-    const response = await fetchWithAuth(`/api/users/${id}`, {
+    }),
+
+  update: (id: number, userData: UserDto): Promise<User> =>
+    fetchWithAuth<User>(`/api/users/${id}`, {
       method: 'PUT',
       body: JSON.stringify(userData),
-    });
-    return response.json();
-  },
-  
-  delete: async (id: number): Promise<void> => {
-    await fetchWithAuth(`/api/users/${id}`, {
+    }),
+
+  delete: (id: number): Promise<void> =>
+    fetchWithAuth<void>(`/api/users/${id}`, {
       method: 'DELETE',
-    });
-  },
+    }),
 };
 
-// Stats API
+// ========== 📊 API DE ESTADÍSTICAS ==========
 export const statsApi = {
-  getOverview: async (): Promise<{
+  getOverview: (): Promise<{
     totalUsers: number;
     adminUsers: number;
     regularUsers: number;
     recentSignups: number;
-  }> => {
-    const response = await fetchWithAuth('/api/stats/overview');
-    return response.json();
-  },
-  
-  getChartData: async (): Promise<Array<{
-    name: string;
-    usuarios: number;
-    admins: number;
-  }>> => {
-    const response = await fetchWithAuth('/api/stats/charts');
-    const data = await response.json();
-    
-    // Transform backend response to match frontend expectations
-    return data.map((item: any) => ({
+  }> => fetchWithAuth('/api/stats/overview'),
+
+  getChartData: async (): Promise<
+    Array<{ name: string; usuarios: number; admins: number }>
+  > => {
+    const data = await fetchWithAuth<any[]>('/api/stats/charts');
+    return data.map((item) => ({
       name: item.monthName || item.name,
       usuarios: item.userCount || item.usuarios,
       admins: item.adminCount || item.admins,

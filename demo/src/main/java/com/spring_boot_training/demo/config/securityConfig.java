@@ -94,11 +94,11 @@ public class securityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .exceptionHandling(ex->ex.authenticationEntryPoint(entryPoint))
             .authorizeHttpRequests(authz -> authz
-                .requestMatchers("/apiu/auth/**").permitAll()  // Permite acceso a login
+                .requestMatchers("/api/auth/**").permitAll()  // Permite acceso a login
                 .requestMatchers("/api/users/add").permitAll() // Permite registro sin autenticación
                 .requestMatchers("/api/users/**").permitAll()  // Temporal: permite acceso a usuarios
-                .requestMatchers("/api/stats/**").permitAll()  // Temporal: permite acceso a stats
-                .anyRequest().permitAll()  // Temporal: permite todo
+                .requestMatchers("/api/stats/**").authenticated()  // Requiere autenticación para stats
+                .anyRequest().authenticated()  // Requiere autenticación por defecto
             );
             //esto es para agregar el filtro antes del filtro de autenticación por defecto
             http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

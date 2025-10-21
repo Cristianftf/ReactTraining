@@ -13,6 +13,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ userToEdit, onSave, onClo
   const [email, setEmail] = useState('');
   const [rol, setRol] = useState('');
 
+
+
+
+
+  //esto es para
+  //inicializar los campos del formulario si se está editando un usuario
   useEffect(() => {
     if (userToEdit) {
       setName(userToEdit.name);
@@ -21,6 +27,11 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ userToEdit, onSave, onClo
     }
   }, [userToEdit]);
 
+
+
+
+
+  //esto es para manejar el submit del formulario
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !rol) {
@@ -35,6 +46,12 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ userToEdit, onSave, onClo
     onSave(userData);
     onClose();
   };
+
+
+
+
+
+
 
   return (
     <div className="modal-overlay">
