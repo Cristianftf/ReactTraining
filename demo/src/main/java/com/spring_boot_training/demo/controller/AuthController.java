@@ -5,6 +5,7 @@ import com.spring_boot_training.demo.dto.UserDto;
 import com.spring_boot_training.demo.security.dto.AuthResponse;
 import com.spring_boot_training.demo.security.dto.LoginRequest;
 import com.spring_boot_training.demo.security.service.CustomUserDetailsService;
+import com.spring_boot_training.demo.security.service.CustomUserDetails;
 import com.spring_boot_training.demo.security.service.JwtService;
 import com.spring_boot_training.demo.service.UserService;
 
@@ -48,8 +49,17 @@ public class AuthController {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
         // cargar userDetails
         UserDetails ud = customUserDetailsService.loadUserByUsername(request.getEmail());
-        // generar token (puedes agregar roles y claims en el map)
+        // Añadir claims con información del usuario para que el frontend pueda reconstruir el User
         var extraClaims = new HashMap<String, Object>();
+        if (ud instanceof CustomUserDetails) {
+            CustomUserDetails cud = (CustomUserDetails) ud;
+            var u = cud.getUser();
+            extraClaims.put("id", u.id);
+            extraClaims.put("name", u.name != null ? u.name : "");
+            extraClaims.put("email", u.email != null ? u.email : request.getEmail());
+            // normalizar rol a minúsculas para el frontend
+            extraClaims.put("rol", u.rol != null ? u.rol.toLowerCase() : "user");
+        }
         String token = jwtService.generateToken(extraClaims, ud);
         return ResponseEntity.ok(new AuthResponse(token));
     }

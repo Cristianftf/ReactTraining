@@ -3,10 +3,9 @@ import type { User, UserDto, LoginCredentials } from '../types';
 
 const API_BASE_URL = 'http://localhost:8000';
 
-// ========== 🔐 UTILIDADES DE AUTENTICACIÓN ==========
 const getAuthToken = (): string | null => localStorage.getItem('token');
 
-const decodeJWT = (token: string): any | null => {
+export const decodeJWT = (token: string): any | null => {
   try {
     const payload = token.split('.')[1];
     const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
@@ -17,71 +16,67 @@ const decodeJWT = (token: string): any | null => {
   }
 };
 
-// ========== ⚠️ MANEJO GLOBAL DE ERRORES ==========
 const handleApiError = async (response: Response): Promise<never> => {
   let message = 'Error en la solicitud';
+  let body: any = null;
   try {
-    const data = await response.json();
-    message = data.message || data.error || response.statusText;
+    body = await response.json();
+    message = body.message || body.error || response.statusText;
   } catch {
     message = response.statusText || message;
   }
-  throw new Error(message);
+  const err: any = new Error(message);
+  err.status = response.status;
+  err.body = body;
+  throw err;
 };
 
-// ========== 🌐 FUNCIONES BASE PARA FETCH ==========
 const fetchWithAuth = async <T>(url: string, options: RequestInit = {}): Promise<T> => {
   const token = getAuthToken();
+  const baseHeaders: Record<string, string> = { 'Content-Type': 'application/json', ...(options.headers as Record<string, string> || {}) };
+  const authHeaders: Record<string, string> = token ? { Authorization: `Bearer ${token}` } : {};
+  const headers: HeadersInit = { ...baseHeaders, ...authHeaders };
 
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-    ...(options.headers || {}),
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  };
-
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    ...options,
-    headers,
-  });
-
+  const response = await fetch(`${API_BASE_URL}${url}`, { ...options, headers });
   if (!response.ok) await handleApiError(response);
 
-  // Si la respuesta no tiene contenido (204) o no es JSON, devolvemos undefined o el texto crudo
   if (response.status === 204) return undefined as unknown as T;
   const contentType = response.headers.get('content-type') || '';
   if (!contentType.includes('application/json')) {
     const text = await response.text();
-    try {
-      return JSON.parse(text) as T;
-    } catch {
-      // si no es JSON válido, devolvemos texto como fallback
-      return text as unknown as T;
-    }
+    try { return JSON.parse(text) as T; } catch { return text as unknown as T; }
   }
-
   return response.json() as Promise<T>;
 };
 
 // ========== 🔒 API DE AUTENTICACIÓN ==========
 export const authApi = {
   /**
-   * Inicia sesión en el sistema
+   * Inicia sesión en el sistema (no usa fetchWithAuth porque todavía no hay token)
    */
   login: async (credentials: LoginCredentials): Promise<{ token: string; user: User }> => {
-    const data = await fetchWithAuth<{ token: string }>('/api/auth/login', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     });
 
+    if (!response.ok) {
+      let message = 'Error en login';
+      try { const data = await response.json(); message = data.message || data.error || response.statusText; } catch {}
+      throw new Error(message);
+    }
+
+    const data = await response.json() as { token: string };
     const decoded = decodeJWT(data.token);
     if (!decoded) throw new Error('Token inválido recibido del servidor');
 
-    // Construimos el usuario desde el token (sin llamar de nuevo al backend)
+    // Construimos el usuario desde el token (claims añadidos por backend)
     const user: User = {
-      id: decoded.id || decoded.sub || 0,
+      id: Number(decoded.id) || Number(decoded.sub) || 0,
       name: decoded.name || '',
       email: decoded.email || credentials.email,
-      rol: decoded.rol || 'user',
+      rol: (decoded.rol || 'user').toString() === 'admin' ? 'admin' : 'user',
       password: ''
     };
 
@@ -91,11 +86,16 @@ export const authApi = {
   /**
    * Registra un nuevo usuario
    */
-  register: async (userData: UserDto): Promise<User> => {
-    return fetchWithAuth<User>('/api/users/add', {
+  register: async (userData: UserDto): Promise<void> => {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(userData),
     });
+
+    if (!response.ok) await handleApiError(response);
+    // backend devuelve un mensaje de éxito como texto; no necesitamos retornarlo aquí
+    return;
   },
 };
 

@@ -1,6 +1,9 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, LoginCredentials, UserDto } from '../types';
-import { authApi } from '../services/api';
+import { authApi, decodeJWT } from '../services/api';
+
+const STORAGE_USER = 'user';
+const STORAGE_TOKEN = 'token';
 
 interface AuthContextType {
   user: User | null;
@@ -13,39 +16,58 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function buildUserFromToken(token: string, fallback?: User | null): User | null {
+  const decoded = decodeJWT(token);
+  if (!decoded) return fallback ?? null;
+  return {
+    id: Number(decoded.id) || Number(decoded.sub) || 0,
+    name: decoded.name || (fallback?.name ?? ''),
+    email: decoded.email || (fallback?.email ?? ''),
+    rol: (decoded.rol || (fallback?.rol ?? 'user')).toString() === 'admin' ? 'admin' : 'user',
+    password: '',
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const storedUser = localStorage.getItem('user');
-    const storedToken = localStorage.getItem('token');
-    
-    if (storedUser && storedToken) {
-      setUser(JSON.parse(storedUser));
+    const storedUser = localStorage.getItem(STORAGE_USER);
+    const storedToken = localStorage.getItem(STORAGE_TOKEN);
+    const parsedStoredUser = storedUser ? JSON.parse(storedUser) : null;
+
+    if (storedToken) {
+      const reconstructed = buildUserFromToken(storedToken, parsedStoredUser);
+      if (reconstructed) {
+        setUser(reconstructed);
+        localStorage.setItem(STORAGE_USER, JSON.stringify(reconstructed));
+      } else if (parsedStoredUser) {
+        setUser(parsedStoredUser);
+      }
+    } else if (parsedStoredUser) {
+      setUser(parsedStoredUser);
     }
+
     setIsLoading(false);
   }, []);
 
-  const login = async (credentials: LoginCredentials) => {
+  const login = useCallback(async (credentials: LoginCredentials) => {
     const { token, user } = await authApi.login(credentials);
-    
-    // Store user and token
-    localStorage.setItem('user', JSON.stringify(user));
-    localStorage.setItem('token', token);
+    localStorage.setItem(STORAGE_TOKEN, token);
+    localStorage.setItem(STORAGE_USER, JSON.stringify(user));
     setUser(user);
-  };
+  }, []);
 
-  const register = async (userData: UserDto) => {
+  const register = useCallback(async (userData: UserDto) => {
     await authApi.register(userData);
-  };
+  }, []);
 
-  const logout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
+  const logout = useCallback(() => {
+    localStorage.removeItem(STORAGE_USER);
+    localStorage.removeItem(STORAGE_TOKEN);
     setUser(null);
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -65,8 +87,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (context === undefined) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }

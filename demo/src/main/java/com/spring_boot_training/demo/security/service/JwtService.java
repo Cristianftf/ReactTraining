@@ -105,8 +105,11 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
+        // prefer the precomputed signingKey inicializado en @PostConstruct
+        if (signingKey != null) return signingKey;
         byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
-        return Keys.hmacShaKeyFor(keyBytes);
+        signingKey = Keys.hmacShaKeyFor(keyBytes);
+        return signingKey;
     }
 
 }

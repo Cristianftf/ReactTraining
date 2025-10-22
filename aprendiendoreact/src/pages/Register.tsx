@@ -64,7 +64,7 @@ export function Register() {
     try {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { confirmPassword, ...userData } = formData;
-      await register(userData);
+      await register(userData as any);
       
       setSuccessMessage('¡Registro exitoso! Redirigiendo al login...');
       
@@ -73,7 +73,9 @@ export function Register() {
         navigate('/login');
       }, 2000);
     } catch (error: any) {
-      setRegisterError(error.message || 'Error al registrar usuario');
+      // Si es un error lanzado por handleApiError, puede tener status y body
+      const message = error?.body?.message || error?.message || 'Error al   usuario';
+      setRegisterError(message);
     } finally {
       setIsSubmitting(false);
     }

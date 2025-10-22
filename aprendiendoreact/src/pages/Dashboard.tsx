@@ -25,7 +25,7 @@ const addToast = (type: 'error' | 'success', message: string) => {
 };
 
 export function Dashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     adminUsers: 0,
@@ -42,14 +42,19 @@ export function Dashboard() {
 
   const fetchStats = async () => {
     try {
-      const data = await statsApi.getOverview();
-      setStats(data);
-    } catch (error: any) {
-      console.error('Error al cargar estadísticas:', error);
-      addToast('error', error.message || 'No se pudieron cargar las estadísticas');
-    } finally {
-      setLoading(false);
-    }
+        const data = await statsApi.getOverview();
+        setStats(data);
+      } catch (error: any) {
+        console.error('Error al cargar estadísticas:', error);
+        if (error?.status === 401) {
+          addToast('error', 'Sesión expirada. Redirigiendo al login...');
+          logout();
+          return;
+        }
+        addToast('error', error.message || 'No se pudieron cargar las estadísticas');
+      } finally {
+        setLoading(false);
+      }
   };
 
   const fetchChartData = async () => {

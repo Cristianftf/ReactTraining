@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
+// RestController used instead of Controller
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,7 +23,7 @@ import com.spring_boot_training.demo.model.User;
 
 
 
-@Controller
+@org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api/users")
 public class UserController {
     @Autowired
@@ -35,7 +35,7 @@ public class UserController {
     }
 
     @GetMapping("/{name}")
-    public User GetUser(String name) {
+    public User GetUser(@org.springframework.web.bind.annotation.PathVariable String name) {
         return userService.getUser(name);
     }
 

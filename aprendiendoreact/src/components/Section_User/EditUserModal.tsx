@@ -4,14 +4,15 @@ import { User } from '../../types';
 
 interface UserFormModalProps {
   userToEdit?: User | null;
-  onSave: (user: Omit<User, 'id'> | User) => void;
+  // onSave acepta tanto creación (sin id, password opcional) como edición (incluye id)
+  onSave: (user: { name: string; email: string; rol: User['rol']; id?: number; password?: string }) => void;
   onClose: () => void;
 }
 
 const UserFormModal: React.FC<UserFormModalProps> = ({ userToEdit, onSave, onClose }) => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [rol, setRol] = useState('');
+  const [rol, setRol] = useState<User['rol']>(() => (userToEdit ? userToEdit.rol : 'user'));
 
 
 
@@ -65,7 +66,10 @@ const UserFormModal: React.FC<UserFormModalProps> = ({ userToEdit, onSave, onClo
           <input value={email} onChange={(e) => setEmail(e.target.value)} />
 
           <label>Rol</label>
-          <input value={rol} onChange={(e) => setRol(e.target.value)} />
+          <select value={rol} onChange={(e) => setRol(e.target.value as User['rol'])}>
+            <option value="user">Usuario</option>
+            <option value="admin">Administrador</option>
+          </select>
 
           <div className="modal-buttons">
             <button type="submit">Guardar</button>
