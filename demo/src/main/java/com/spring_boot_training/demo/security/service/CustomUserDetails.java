@@ -8,7 +8,9 @@ import com.spring_boot_training.demo.model.User;
 
 import java.util.Collection;
 
+// ✅ Implementación personalizada de UserDetails que envuelve la entidad User
 public class CustomUserDetails implements UserDetails{
+
     private final User user;
 
     public CustomUserDetails(User user) {

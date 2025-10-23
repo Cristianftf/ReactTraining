@@ -30,12 +30,11 @@ public class securityConfig {
      private final JwtAuthenticationEntryPoint entryPoint;
 
 
+     // ✅ Constructor para inyección de dependencias
     securityConfig(JwtService jwtService, CustomUserDetailsService customUserDetailsService,JwtAuthenticationEntryPoint entryPoint) {
         this.jwtService = jwtService;
         this.customUserDetailsService = customUserDetailsService;
         this.entryPoint = entryPoint;
-
-
     }
 
   
@@ -84,7 +83,7 @@ public class securityConfig {
 
 
 
-    // ✅ Configuración básica de seguridad (ajusta según tus necesidades)
+    // ✅ Configuración de seguridad 
     
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -100,6 +99,7 @@ public class securityConfig {
                 .requestMatchers("/api/stats/**").authenticated()  // Requiere autenticación para stats
                 .anyRequest().authenticated()  // Requiere autenticación por defecto
             );
+            
             //esto es para agregar el filtro antes del filtro de autenticación por defecto
             http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();

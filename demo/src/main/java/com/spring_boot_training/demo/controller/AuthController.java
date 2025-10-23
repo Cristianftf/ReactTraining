@@ -47,10 +47,13 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         // autenticar
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+
         // cargar userDetails
         UserDetails ud = customUserDetailsService.loadUserByUsername(request.getEmail());
+
         // Añadir claims con información del usuario para que el frontend pueda reconstruir el User
         var extraClaims = new HashMap<String, Object>();
+        
         if (ud instanceof CustomUserDetails) {
             CustomUserDetails cud = (CustomUserDetails) ud;
             var u = cud.getUser();
