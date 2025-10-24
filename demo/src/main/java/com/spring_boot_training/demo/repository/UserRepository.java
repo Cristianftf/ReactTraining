@@ -1,5 +1,6 @@
 package com.spring_boot_training.demo.repository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,16 +38,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     long countByCreatedAtAfter(LocalDateTime date);
 
-    @Query("""
+      @Query("""
         SELECT 
-            FUNCTION('to_char', u.createdAt, 'Month') AS monthName,
-            COUNT(CASE WHEN u.rol = 'USER' THEN 1 END) AS userCount,
-            COUNT(CASE WHEN u.rol = 'ADMIN' THEN 1 END) AS adminCount
+            EXTRACT(YEAR FROM u.createdAt) AS year,
+            EXTRACT(MONTH FROM u.createdAt) AS month,
+            SUM(CASE WHEN u.rol = 'USER' THEN 1 ELSE 0 END) AS userCount,
+            SUM(CASE WHEN u.rol = 'ADMIN' THEN 1 ELSE 0 END) AS adminCount
         FROM User u
-        WHERE u.createdAt >= :sixMonthsAgo
-        GROUP BY FUNCTION('to_char', u.createdAt, 'Month'), FUNCTION('date_trunc', 'month', u.createdAt)
-        ORDER BY FUNCTION('date_trunc', 'month', u.createdAt)
+        WHERE u.createdAt BETWEEN :startDate AND :endDate
+        GROUP BY year, month
+        ORDER BY year, month
     """)
-    List<Object[]> findMonthlyUserStats(@Param("sixMonthsAgo") LocalDateTime sixMonthsAgo);
-
+    List<Object[]> countUsersByMonth(
+            @Param("startDate") LocalDate startDate,
+            @Param("endDate") LocalDate endDate
+    );
 }

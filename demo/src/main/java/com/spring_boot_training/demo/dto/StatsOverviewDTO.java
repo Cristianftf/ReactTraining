@@ -15,7 +15,7 @@ public class StatsOverviewDTO {
         this.recentSignups = recentSignups;
     }
 
-    // Getters (no necesitas setters si es solo para lectura)
+   
     public long getTotalUsers() { return totalUsers; }
     public long getAdminUsers() { return adminUsers; }
     public long getRegularUsers() { return regularUsers; }

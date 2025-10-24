@@ -57,6 +57,7 @@ export function Dashboard() {
       }
   };
 
+// Función para obtener los datos del gráfico
   const fetchChartData = async () => {
     try {
       const data = await statsApi.getChartData();
@@ -97,6 +98,7 @@ export function Dashboard() {
       change: stats.recentSignups > 0 ? `+${stats.recentSignups}` : '—',
     },
   ];
+  
 
   return (
     <div className="dashboard-container">

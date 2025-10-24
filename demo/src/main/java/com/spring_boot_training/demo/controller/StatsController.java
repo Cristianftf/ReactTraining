@@ -4,6 +4,7 @@ package com.spring_boot_training.demo.controller;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -22,13 +23,15 @@ StatsService statsService;
     }
 
     @GetMapping("/overview")
+    
     public StatsOverviewDTO getOverview() {
         return statsService.getOverviewStats();
     }
 
-    @GetMapping("/charts")
-    public List<ChartDataDTO> getChart() {
-        return statsService.getMonthlyChartStats();
+    @GetMapping("/chart")
+     
+    public List<ChartDataDTO> getChartData() {
+        return statsService.getChartData();
     }
 
 

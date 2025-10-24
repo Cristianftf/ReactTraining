@@ -1,7 +1,11 @@
 package com.spring_boot_training.demo.service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.YearMonth;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
@@ -21,26 +25,40 @@ public class StatsService {
 
     public StatsOverviewDTO getOverviewStats() {
         long totalUsers = userRepository.count();
-        long adminUsers = userRepository.countByRol("ADMIN");
-        long regularUsers = userRepository.countByRol("USER");
+        long adminUsers = userRepository.countByRol("admin");
+        long regularUsers = userRepository.countByRol("user");
         LocalDateTime thirtyDaysAgo = LocalDateTime.now().minusDays(30);
         long recentSignups = userRepository.countByCreatedAtAfter(thirtyDaysAgo);
 
         return new StatsOverviewDTO(totalUsers, adminUsers, regularUsers, recentSignups);
     }
 
-    public List<ChartDataDTO> getMonthlyChartStats() {
-        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6).withDayOfMonth(1).withHour(0).withMinute(0).withSecond(0);
-        List<Object[]> results = userRepository.findMonthlyUserStats(sixMonthsAgo);
+    public List<ChartDataDTO> getChartData() {
+        LocalDate now = LocalDate.now();
+        LocalDate sixMonthsAgo = now.minusMonths(5).withDayOfMonth(1);
+
+        List<Object[]> results = userRepository.countUsersByMonth(sixMonthsAgo, now);
+
+        if (results.isEmpty()) {
+            System.out.println("⚠️ No hay datos de usuarios en el rango de fechas.");
+        }
 
         return results.stream()
-            .map(row -> {
-                String monthName = ((String) row[0]).trim(); // "January   " → "January"
-                long userCount = ((Number) row[1]).longValue();
-                long adminCount = ((Number) row[2]).longValue();
-                return new ChartDataDTO(monthName, userCount, adminCount);
-            })
-            .collect(Collectors.toList());
+        .map(obj -> {
+            YearMonth ym = YearMonth.of(
+                    ((Number) obj[0]).intValue(),
+                    ((Number) obj[1]).intValue()
+            );
+
+            String monthName = ym.getMonth().getDisplayName(TextStyle.SHORT, Locale.of("es", "ES"));
+            long usuarios = ((Number) obj[2]).longValue();
+            long admins = ((Number) obj[3]).longValue();
+
+            return new ChartDataDTO(monthName, usuarios, admins);
+        })
+        .collect(Collectors.toList());
+
     }
+
 
 }

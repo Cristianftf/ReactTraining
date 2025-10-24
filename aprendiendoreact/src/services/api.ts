@@ -121,6 +121,7 @@ export const usersApi = {
     }),
 };
 
+
 // ========== 📊 API DE ESTADÍSTICAS ==========
 export const statsApi = {
   getOverview: (): Promise<{
@@ -131,13 +132,17 @@ export const statsApi = {
   }> => fetchWithAuth('/api/stats/overview'),
 
   getChartData: async (): Promise<
-    Array<{ name: string; usuarios: number; admins: number }>
-  > => {
-    const data = await fetchWithAuth<any[]>('/api/stats/charts');
-    return data.map((item) => ({
-      name: item.monthName || item.name,
-      usuarios: item.userCount || item.usuarios,
-      admins: item.adminCount || item.admins,
-    }));
-  },
+  Array<{ name: string; usuarios: number; admins: number }>
+> => {
+  // 🔹 Endpoint corregido
+  const data = await fetchWithAuth<any[]>('/api/stats/chart');
+
+  // 🔹 Adaptamos los nombres al formato que espera Recharts
+  return data.map((item) => ({
+    name: item.month || item.monthName || 'Desconocido',
+    usuarios: item.userCount ?? 0,
+    admins: item.adminCount ?? 0,
+  }));
+},
+
 };
